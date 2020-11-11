@@ -90,6 +90,20 @@ public class MockDefinitionImportExportServiceImpl implements MockDefinitionImpo
         return Base64.getEncoder().encodeToString(archiveBytes);
     }
 
+    @Override
+    public String exportSingleMock(final String selectedMockToExport, final String token)
+            throws MockExportException, RecordNotFoundException {
+        logger.debug("export for single mock [" + selectedMockToExport + "] called");
+
+        final List<String> selectedExports = new ArrayList<>(1);
+        selectedExports.add(selectedMockToExport);
+        String exportContent = loadHTTPExportContent(selectedExports, token);
+        if (exportContent.startsWith("[{") && exportContent.endsWith("}]")) {
+            exportContent = exportContent.substring(1, exportContent.length() - 1);
+        }
+        return exportContent;
+    }
+
     //
     // Export related functions
     private String loadHTTPExportContent(final List<String> selectedExports, final String token) {

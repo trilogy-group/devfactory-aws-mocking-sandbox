@@ -17,7 +17,11 @@ public interface MockDefinitionImportExportService {
     String restExportFileName = "rest_export";
     String exportFileNameExt = ".json";
 
-    String importFile(final MultipartFile file, final MockImportConfigDTO config, final String token) throws MockImportException, ValidationException, RecordNotFoundException;
-    String export(final List<String> selectedExports, final String token) throws MockExportException, RecordNotFoundException;
+    String importFile(final MultipartFile file, final MockImportConfigDTO config, final String token)
+            throws MockImportException, ValidationException, RecordNotFoundException;
+    String export(final List<String> selectedExports, final String token)
+            throws MockExportException, RecordNotFoundException;
+    String exportSingleMock(final String selectedMockToExport, final String token)
+            throws MockExportException, RecordNotFoundException;
 
 }

@@ -50,7 +50,7 @@ app.controller('tcpDashboardController', function($scope, $window, $rootScope, $
     $scope.createdByTableLabel = 'Created By';
     $scope.statusTableLabel = 'Deployment Status';
     $scope.mockTypeTableLabel = 'HTTP Mock Type';
-    $scope.actionTableLabel = 'Action';
+    $scope.actionTableLabel = 'Actions';
 
 
     //
@@ -164,6 +164,22 @@ app.controller('tcpDashboardController', function($scope, $window, $rootScope, $
 
         });
 
+    };
+
+    $scope.doExportSingleMock = function(mockToExport) {
+        utils.openWarningConfirmation("Are you sure you wish to export " + mockToExport.path, function (alertResponse) {
+            if (alertResponse) {
+                var req = [mockToExport.extId];
+                restClient.doPost($http, '/mock/export-single/RESTFUL', req, function(status, data) {
+                    if (status !== 200) {
+                        showAlert(globalVars.GeneralErrorMessage);
+                        return;
+                    }
+
+                    handleSingleExportDownload(mockToExport, data);
+                });
+            }
+        });
     };
 
     $scope.doOpenImport = function() {
@@ -364,6 +380,27 @@ app.controller('tcpDashboardController', function($scope, $window, $rootScope, $
         a.download = "smockin_export_" + mockExportCount + "_mocks.zip";
         a.text = "";
         a.href = "data:application/zip;base64," + exportData;
+
+        iFrame.contents().find("body").append(a);
+        iFrameDoc.close();
+
+        iFrame.contents().find("body").append(a);
+
+        var clickEvent = iFrameDoc.createEvent("MouseEvent");
+        clickEvent.initEvent("click", true, true);
+        a.dispatchEvent(clickEvent);
+
+    }
+
+    function handleSingleExportDownload(mock, exportData) {
+
+        var iFrame = jQuery('#export-download-frame');
+        var iFrameDoc = iFrame[0].contentDocument || iFrame[0].contentWindow.document;
+
+        var a = iFrameDoc.createElement('a');
+        a.download = mock.method + mock.path.split('/').join('-') + ".json";
+        a.text = "";
+        a.href = "data:application/json;base64," + exportData;
 
         iFrame.contents().find("body").append(a);
         iFrameDoc.close();

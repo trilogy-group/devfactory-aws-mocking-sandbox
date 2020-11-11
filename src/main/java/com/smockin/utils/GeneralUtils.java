@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.smockin.admin.enums.UserModeEnum;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -471,6 +472,21 @@ public final class GeneralUtils {
                 })
                 .collect(Collectors.joining(carriage))
                 .trim();
+    }
+
+    public static String jsonPrettyPrint(String jsonAsString) {
+        if (jsonAsString == null || jsonAsString.trim().length() == 0) {
+            return jsonAsString;
+        }
+        try {
+            JsonMapper mapper = new JsonMapper();
+
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(deserialiseJson(jsonAsString));
+        } catch (JsonProcessingException error) {
+            logger.error("Can't process with pretty print format for given json, returning without reformatting", error);
+
+            return jsonAsString;
+        }
     }
 
 }

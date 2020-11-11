@@ -15,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Base64;
 import java.util.List;
 
 /**
@@ -23,6 +25,8 @@ import java.util.List;
 @Controller
 public class MockDefinitionImportExportController {
 
+    private static final String ERROR_MSG_NOTHING_SPECIFIED_TO_EXPORT = "Nothing specified to export";
+    private static final String ERROR_MSG_SINGLE_MOCK_CAN_EXPORT_ONLY_ONE_MOCK_AT_A_TIME = "SingleMock can export only one mock at a time";
     @Autowired
     private MockDefinitionImportExportService mockDefinitionImportExportService;
 
@@ -59,6 +63,34 @@ public class MockDefinitionImportExportController {
                 .header("Content-Type", "application/zip")
                 .header("Content-Disposition", "attachment; filename=\"" + exportFileName + "\"")
                 .body(mockDefinitionImportExportService.export(exports, token));
+    }
+
+    @RequestMapping(path="/mock/export-single/{serverType}", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public @ResponseBody ResponseEntity<String> exportSingleMock(@PathVariable("serverType") final String serverType,
+                                                                       @RequestHeader(value = GeneralUtils.OAUTH_HEADER_NAME, required = false) final String bearerToken,
+                                                                       @RequestBody final List<String> exports)
+                                                                throws MockExportException, RecordNotFoundException {
+
+        final String token = GeneralUtils.extractOAuthToken(bearerToken);
+
+        if (exports == null) {
+            throw new MockExportException(ERROR_MSG_NOTHING_SPECIFIED_TO_EXPORT);
+        }
+        if (exports.size() > 1) {
+            throw new MockExportException(ERROR_MSG_SINGLE_MOCK_CAN_EXPORT_ONLY_ONE_MOCK_AT_A_TIME);
+        }
+
+        String json = mockDefinitionImportExportService.exportSingleMock(exports.get(0), token);
+        json = GeneralUtils.jsonPrettyPrint(json);
+        final String exportFileName = mockDefinitionImportExportService.exportZipFileNamePrefix
+                + exports.get(0)
+                + mockDefinitionImportExportService.exportFileNameExt;
+
+        return ResponseEntity.ok()
+                .header("Content-Type", MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                .header("Content-Disposition", "attachment; filename=\"" + exportFileName + "\"")
+                .body(Base64.getEncoder().encodeToString(json.getBytes()));
     }
 
 }

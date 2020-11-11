@@ -1,46 +1,33 @@
-<p align="center">
-  <img src="/public/image/smockin_logo.png" width=400 />
-</p>
+# Sandbox for AWS call simulation
 
-<p align="center">
-  version 2.9.1
-</p>
-
-<br />
-
-### Dynamic REST API simulation and for application development & QA testing
-
-   - Visit us: https://www.smockin.com
-
+Based on: Dynamic REST API simulation and for application development & QA testing
+   - Visit: https://www.smockin.com
    - Contact: info@smockin.com
+   - Forked from: https://github.com/mgtechsoftware/smockin
 
 <br />
-<br />
 
 
-### OVERVIEW
+## OVERVIEW
 
-sMockin is an API mocking tool used to dynamically simulate HTTP endpoints.
+sMockin-sandbox is an AWS mock enhancement of sMockin - an API mocking tool used to dynamically simulate HTTP endpoints.
 
 Featuring a rich UI and an inbuilt HTTP mock server, mocking your existing or new API model can be done quickly and without any coding or scripting.
 
-Whether you are a developer who needs to simulate RESTFul endpoints or an engineer working with complex SOA / IoT / microservice infrastructure, sMockin can help by mimicking any services that are either unavailable or otherwise too difficult or time consuming to set up.
-
-sMockin runs as a small web app which can be either installed locally onto a personal machine or hosted centrally and used by multiple users.
-
-<br/>
-
-![dashboard](https://raw.githubusercontent.com/mgtechsoftware/smockin/master/public/image/dashboard.png)
-
-![client call](https://raw.githubusercontent.com/mgtechsoftware/smockin/master/public/image/client-call.png)
+sMockin-sandbox is a container and contains small web server
 
 <br/>
 
 ### KEY FEATURES
 
+* Proxies undefined requests further, including AWS ones
+* Accepts AWS requests at /aws-service-[service], for example:
+ - /aws-service-ce
+ - /aws-service-sts
+ - /aws-service-ec2
+ - ...
 * Create dynamic API mocks to mimic real world application behaviour.
 * Run sMockin centrally and create user accounts for your team.
-* Import / Export mocks to share between your team & version control.
 * Monitor and log traffic going to the HTTP mock server.
 * A complete UI solution requiring zero coding.
 
@@ -49,243 +36,83 @@ sMockin runs as a small web app which can be either installed locally onto a per
 
 ### REQUIREMENTS
 
-   - Java 8
-   - Maven 3
-
-   Please Note
-      -   All bash scripts were written and tested on GNU Bash version 3.2.57(1)-release.
-      -   All BAT files were were written and tested on Windows 7.
-
-<br/>
-
-### QUICK START
-
-Clone this repo:
-
-```
-git clone https://github.com/mgtechsoftware/smockin.git
-```
-
-Change the current directory to **smockin** and build the project:
-
-```
-cd smockin
-
-mvn clean install
-```
-
-Run the **install** and **start** scripts (for windows, use the equivalent .bat files):
-
-```
-./install.sh
-
-./start.sh
-```
-
-Finally from your browser open the dashboard:
-
-```
-http://localhost:8000/index.html
-```
-
-(If running sMockin for the first time then please allow 20 - 30 secs for the app to fully start up.)
+   - Docker
+   - set endpoint for AWS calls to http://[docker-ip]:8000/aws-service-[service]
+   - initial smockin mocks in smockin-to-import.zip (exported previously from running instance). In case file is not provided, mock database is empty
 
 <br />
 
-For further details, please consult the [Installation](https://github.com/mgtechsoftware/smockin/wiki/Installation) and [Getting Started](https://github.com/mgtechsoftware/smockin/wiki/API-Mock-Tutorial:-Getting-Started) guides in the Wiki. 
+## QUICK START 
 
-You can also check out the latest help guide at [help.smockin.com](https://help.smockin.com)
+#### Run sMockin-sandbox as just a docker container with proxy ready-to-use
 
-<br/>
+Running successfully sMockin-sandbox requires:
+- map external volume to "/app/sandbox-data/" (optional but recommended: with initial set of mocks - json files)
+- tunnel ports 8000 and 8001 outside docker to have access to mock server (port 8000) and managing application (port 8001)
+- specified (as environment variables) AWS credentials, i.e.:
+    * AWS_ACCESS_KEY_ID
+    * AWS_SECRET_ACCESS_KEY
+    * AWS_DEFAULT_REGION
 
-### TROUBLESHOOTING
+Hence, running docker can be like:
 
-Please consult the [Configuration & Troubleshooting](https://github.com/mgtechsoftware/smockin/wiki/Configuration-&-Troubleshooting) guide.
+*docker run --rm -dt -p 8000:8000 -p 8001:8001 -e AWS_ACCESS_KEY_ID=[your-aws-key] -e AWS_SECRET_ACCESS_KEY=[your-aws-secret] -e AWS_DEFAULT_REGION=us-east-1 -v /tmp/data-for-smocking-sandbox:/app/sandbox-data/ registry.devfactory.com/devfactory/smockin-sandbox /bin/bash -c "/app/start-app.sh"*
 
-<br/>
+#### Docker
 
-### LICENCE
+Docker image is created automatically during pipeline, but in case you want to do it by your own, pls execute it inside **docker** folder:
 
+*docker build -t registry.devfactory.com/devfactory/smockin-sandbox .*
 
-sMockin is licensed in accordance with the terms of the Apache License, Version 2.0.
+and then publish (if it's a new version which should be used by everyone)
 
-The full text of this license can be found at https://www.apache.org/licenses/LICENSE-2.0
+*docker push registry.devfactory.com/devfactory/smockin-sandbox*
 
-<br/>
 
-### ACKNOWLEDGEMENTS / THIRD PARTIES
+#### Using sMockin-sandbox in your project
 
-   sMockin is built upon the following open source frameworks:
+You can use sMocking-sandbox in your project as a standalone, you can even monitor results, just run in interactive mode:
 
-        Spring Boot                 -       https://projects.spring.io/spring-boot
-        Hibernate                   -       http://hibernate.org
-        Spark                       -       http://sparkjava.com
-        Maven                       -       https://maven.apache.org
-        AngularJS                   -       https://angularjs.org
-        UI Bootstrap                -       https://angular-ui.github.io/bootstrap
-        vkBeautify                  -       https://github.com/vkiryukhin/vkBeautify
-        H2                          -       http://www.h2database.com
-        HikariCP                    -       https://brettwooldridge.github.io/HikariCP
-        Apache Commons              -       https://commons.apache.org/
-        Apache Http Components      -       https://hc.apache.org/
-        Apache Commons IO           -       https://commons.apache.org/proper/commons-io/
-        JUnit                       -       http://junit.org
-        Mockito                     -       http://site.mockito.org/
-        Apache ActiveMQ             -       http://activemq.apache.org/
-        Apache FtpServer            -       https://mina.apache.org/ftpserver-project/
-        RAML Parser 2               -       https://github.com/raml-org/raml-java-parser
-        Jasypt                      -       http://www.jasypt.org/
-        Java-JWT                    -       https://github.com/auth0/java-jwt
-        JWT-Decode                  -       https://github.com/auth0/jwt-decode
-        JQuery                      -       https://jquery.com/
-        Code Mirror                 -       https://codemirror.net/
+*docker run --rm -it -p 8000:8000 -p 8001:8001 -e AWS_ACCESS_KEY_ID=[your-aws-key] -e AWS_SECRET_ACCESS_KEY=[your-aws-secret] -e AWS_DEFAULT_REGION=us-east-1 -v /tmp/data-for-smocking-sandbox:/app/sandbox-data/ registry.devfactory.com/devfactory/smockin-sandbox /bin/bash"*
 
-<br/>
-<br />
+and once started, run 
 
+*/app/start-app.sh*x    
 
-### RECENT RELEASE CHANGES
+#### Import changed data
+When run start-app.sh json files (monted in /app/sandbox-data) are automatically imported once the server is started.
+In case you update them and you want to update smockin, you can do either: 
+* restart start-app.sh (easiest option :), or
+* execute scirpts: 
+    * /app/create_import_archive.sh
+    * /app/import_smockin.sh 
+    
+#### Start from scratch (new project)
 
-<br />
+To start using new project with the sandbox you need:
+- run docker container as described above on a machine with either public IP available (and opened ports) 
+or machine with the same (or paired) VPC as environment you want to test,
+- start docker (as described above). Without any input json files it fallbacks to dummy structure
+with 404 defined - just to accelerate process.
 
-**New in version 2.9**
+Default view:
 
-- Added ability to run sMockin as a proxy server so this can sit between any application and the downstream server it would normally make API calls too.
+<p align="center">
+  <img src="/public/image/sandbox/main-emtpy-view.png" width=400 />
+</p>
 
-- Proxy mode can be run in 2 ways:
+Default rule:
 
-**Option A** sMockin will attempt to find a mock first and only forward the request to your server downstream if a mock could not be found.
+<p align="center">
+  <img src="/public/image/sandbox/default-rule.png" width=400 />
+</p>
 
-**Option B** sMockin will forward the request to the server downstream first and then try to find a suitable mock if the downstream server returns a 404.
+#### Export prepared mock
 
-- Please note, proxy mode is not available when running sMockin in 'multi user' mode.
+You should store text files in Github, to easily follow changes, in this case, in *json* files.
+To export such json please use dedicated Export button, in an endpoint you want to export, like below:
 
-<br />
-<br />
-
-
-**New in version 2.8**
-
-- Added the ability to save Key / Value pair data which can be recalled in your mock responses.
-
-To add Key / Value data, click on the drop down box list from the top right hand corner of the UI and select **Manage Key/Value Data**. 
-
-To then reference your Key / Value data in your mock responses, this can be achieved as follows:
-
-For **Response Variables** syntax:
-
-```
-$lookUpKvp(kvpKeyName)
-```
-
-Or if using a **Custom JavaScript** based mock:
-
-```
-lookUpKvp('kvpKeyName');
-```
-
-For greater flexibility, you can also reference inbound request values as part of your lookup like so:
-
-**Response Variables** syntax:
-
-```
-$lookUpKvp($requestParameter(firstName))
-```
-
-**Custom JavaScript** syntax:
-
-```
-lookUpKvp(request.parameters.firstName);
-```
-
-<br />
-
-- Changes to the syntax format used in **Response Variables**.
-
-For example: 
-
-```
-${REQ_PARAM=firstName} is now be expressed as $requestParameter(firstName)
-${REQ_HEAD=firstName} is expressed as $requestHeader(firstName)
-${REQ_PARAM=firstName} is expressed as $requestParameter(firstName)
-${PATH_VAR=firstName} is expressed as $pathVar(firstName)
-${RANDOM_NUMBER=1 TO 10} is expressed as $randomNumber(1, 10) or $randomNumber(10)
-${ISO_DATETIME} is expressed as $isoDatetime
-${ISO_DATE} is expressed as $isoDate
-${UUID} is expressed as $uuid
-
-$requestBody has been added as a new option
-```
-
-More details to follow at https://help.smockin.com
-
-
-<br />
-<br />
-
-
-**New in version 2.7**
-
-- Introducing **'Stateful REST'** mocking. Mocked endpoints using this feature, can cache and manage JSON state based on the RESTful instructions they receive, helping to mimic 'real world' data behavior.
-
-<br />
-
-To give it a go, simply create a new mock (e.g /pets) selecting the 'Stateful REST' type and save.
-
-<br />
-
-Then run the following calls to see it immediately action:
-
-> curl -i -X GET http://localhost:8001/pets
-
-> curl -i -X POST http://localhost:8001/pets -d '{ "name" : "fido", "age" : 4, "type" : "DOG" }'
-
-> curl -i -X POST http://localhost:8001/pets -d '{ "name" : "minty", "age" : 6, "type" : "CAT" }'
-
-<br />
-
-Your next call to GET /pets should return the following:
-
-> curl -i -X GET http://localhost:8001/pets
-
-```
-[
-  {
-    "name": "fido",
-    "age": 4,
-    "type": "DOG",
-    "id": "223af502-ae81-4274-9101-4886821ea823"
-  },
-  {
-    "name": "minty",
-    "age": 6,
-    "type": "CAT",
-    "id": "0a1c837a-8cd5-4a3c-b2e8-a519933e99d5"
-  }
-]
-```
-
-<br />
-
-You can proceed to GET, PUT, PATCH and DELETE your mock using the generated id...
-
-> curl -i -X GET http://localhost:8001/pets/0a1c837a-8cd5-4a3c-b2e8-a519933e99d5
-
-> curl -i -X PUT http://localhost:8001/pets/0a1c837a-8cd5-4a3c-b2e8-a519933e99d5 -d '{ "id" : "0a1c837a-8cd5-4a3c-b2e8-a519933e99d5", "name" : "Minty", "age" : 7, "type" : "CAT" }'
-
-> curl -i -X PATCH http://localhost:8001/pets/0a1c837a-8cd5-4a3c-b2e8-a519933e99d5 - d '{ "op" : "REPLACE", "path" : "/name", "value" : "Minty Mi" }'
-
-> curl -i -X DELETE http://localhost:8001/pets/0a1c837a-8cd5-4a3c-b2e8-a519933e99d5
-
-
-<br />
-<br/>
-
-
-### ABOUT
-
-sMockin is designed and actively maintained by MG Tech Software Ltd.
-
-Why the name sMockin? Whilst it may sound like an old english middle ages embroidery technique, the name actually came about more in relation to a classic Jim Carey movie quote 'Smokin'. We then added the extra letter to play on the concept of software mocking and there you have it. 
-
-Yes, way too much thought went into that...
+<p align="center">
+  <img src="/public/image/sandbox/export-button.png" width=400 />
+</p>
+ 

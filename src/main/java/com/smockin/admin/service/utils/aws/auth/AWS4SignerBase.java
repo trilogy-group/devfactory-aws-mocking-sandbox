@@ -41,6 +41,7 @@ public abstract class AWS4SignerBase {
     protected final SimpleDateFormat dateTimeFormat;
     protected final SimpleDateFormat dateStampFormat;
 
+    public static final String HEADER_X_AMZ_SECURITY_TOKEN = "x-amz-security-token";
     public static final String HEADER_X_AMZ_CONTENT_SHA_256 = "x-amz-content-sha256";
     public static final String HEADER_X_AMZ_DATE = "x-amz-date";
 

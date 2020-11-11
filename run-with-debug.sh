@@ -1,16 +1,9 @@
-#!/bin/bash
+#!/bin/sh
 
 # Check Java 8 is installed
-java -version 2>&1 | grep -i version | awk -F '"' '/version/ {print $2}' > ./java.version
-IFS='.' read major minor extra < ./java.version
+SMOCKIN_JAVA_VERSION=$(java -version 2>&1 | grep -i version | sed 's/.*version ".*\.\(.*\)\..*"/\1/; 1q')
 
-if (( major == 1 )) ; then
-    SMOCKIN_JAVA_VERSION=$minor
-else
-    SMOCKIN_JAVA_VERSION=$major
-fi
-
-if (( SMOCKIN_JAVA_VERSION < 8 ))
+if [ "${SMOCKIN_JAVA_VERSION}" \< 8 ]
 then
   echo ""
   echo "Smockin requires Java 8 or later to run"
@@ -195,12 +188,12 @@ fi
 #
 #
 
-
+DEBUG_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=59998"
 if ( $USE_CONSOLE ); then
-  mvn spring-boot:run -Dspring-boot.run.jvmArguments="-Dspring.profiles.active=$APP_PROFILE -Dserver.port=$APP_PORT -Dmulti.user.mode=$MULTI_USER_MODE $VM_ARGS $RESET_SYS_ADMIN_ARG -Dlogging.level.com.smockin=DEBUG"
+  mvn spring-boot:run -Dspring-boot.run.jvmArguments="$DEBUG_OPTS -Dspring.profiles.active=$APP_PROFILE -Dserver.port=$APP_PORT -Dmulti.user.mode=$MULTI_USER_MODE $VM_ARGS $RESET_SYS_ADMIN_ARG -Dlogging.level.com.smockin=DEBUG"
 else
   echo "#  - Run 'shutdown.sh' when you wish to terminate this application."
-  mvn spring-boot:run -Dspring-boot.run.jvmArguments="-Dspring.profiles.active=$APP_PROFILE -Dserver.port=$APP_PORT -Dmulti.user.mode=$MULTI_USER_MODE $VM_ARGS $RESET_SYS_ADMIN_ARG" > /dev/null 2>&1 &
+  mvn spring-boot:run -Dspring-boot.run.jvmArguments="$DEBUG_OPTS -Dspring.profiles.active=$APP_PROFILE -Dserver.port=$APP_PORT -Dmulti.user.mode=$MULTI_USER_MODE $VM_ARGS $RESET_SYS_ADMIN_ARG" > /dev/null 2>&1 &
   echo "$!" > $SMOCKIN_PID_FILE
 fi
 
