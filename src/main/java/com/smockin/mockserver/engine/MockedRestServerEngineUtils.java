@@ -88,6 +88,10 @@ public class MockedRestServerEngineUtils {
     @Autowired
     private AwsCredentialsProvider awsCredentialsProvider;
 
+    private static final Pattern ACCESS_KEY_PATTERN = Pattern.compile("<AccessKeyId>(.*)</AccessKeyId>");
+    private static final Pattern SECRET_KEY_PATTERN = Pattern.compile("<SecretAccessKey>(.*)</SecretAccessKey>");
+    private static final Pattern SECURITY_TOKEN_PATTERN = Pattern.compile("<SessionToken>(.*)</SessionToken>");
+
 
     public Optional<String> loadMockedResponse(final Request request,
                                                final Response response,
@@ -109,12 +113,15 @@ public class MockedRestServerEngineUtils {
                     mockedResponse + "\n" +
                     "===========================================================================");
             if (mockedResponse != null && mockedResponse.startsWith("<AssumeRoleResponse ")) {
-                Pattern accessKeyPattern = Pattern.compile("<AccessKeyId>(.*)</AccessKeyId>");
-                Pattern secretKeyPattern = Pattern.compile("<SecretAccessKey>(.*)</SecretAccessKey>");
-                Matcher accessKeyMatcher = accessKeyPattern.matcher(mockedResponse);
-                Matcher secretKeyMatcher = secretKeyPattern.matcher(mockedResponse);
-                if (accessKeyMatcher.find() && secretKeyMatcher.find()) {
-                    awsCredentialsProvider.add(accessKeyMatcher.group(1), secretKeyMatcher.group(1));
+                Matcher accessKeyMatcher = ACCESS_KEY_PATTERN.matcher(mockedResponse);
+                Matcher secretKeyMatcher = SECRET_KEY_PATTERN.matcher(mockedResponse);
+                Matcher securityTokenMatcher = SECURITY_TOKEN_PATTERN.matcher(mockedResponse);
+                if (accessKeyMatcher.find() && secretKeyMatcher.find() && securityTokenMatcher.find()) {
+                    awsCredentialsProvider.add(
+                            accessKeyMatcher.group(1),
+                            secretKeyMatcher.group(1),
+                            securityTokenMatcher.group(1)
+                            );
                 }
             }
         });
@@ -281,15 +288,19 @@ public class MockedRestServerEngineUtils {
                 AwsProfile awsProfile = awsCredentialsProvider.getDefaultProfile();
                 final String awsAccessKey = determineAwsAccessKeyBasedOnRequest(httpClientCallDTO.getHeaders());
                 final String awsService = httpClientCallDTO.getHeaders().get(HEADER_X_SMOCKIN_AWS_SERVICE);
-                AWS4Signer aws4Signer = new AWS4Signer(awsAccessKey, awsCredentialsProvider.get(awsAccessKey),
+                AWS4Signer aws4Signer = new AWS4Signer(awsAccessKey, awsCredentialsProvider.getSecretKey(awsAccessKey),
                         new URL(httpClientCallDTO.getUrl()), httpClientCallDTO.getMethod().toString(),
                         (awsService != null ? awsService.toLowerCase() : ""),
                         awsProfile.getRegion()
                 );
-                if (httpClientCallDTO.getBody() != null
-                        && httpClientCallDTO.getBody().startsWith("Action=AssumeRole")) {
-                    AWS4Signer.removeHeader(httpClientCallDTO.getHeaders(), AWS4SignerBase.HEADER_X_AMZ_SECURITY_TOKEN);
+
+                AWS4Signer.removeHeader(httpClientCallDTO.getHeaders(), AWS4SignerBase.HEADER_X_AMZ_SECURITY_TOKEN);
+                final String securityTokenForAccessKey = awsCredentialsProvider.getSecurityToken(awsAccessKey);
+                if (securityTokenForAccessKey != null) {
+                    httpClientCallDTO.getHeaders()
+                            .put(AWS4SignerBase.HEADER_X_AMZ_SECURITY_TOKEN, securityTokenForAccessKey);
                 }
+
                 AWS4Signer.removeHeader(httpClientCallDTO.getHeaders(), HEADER_X_SMOCKIN_AWS_SERVICE);
                 final String bodyHash = AWS4Signer.computeContentHash(httpClientCallDTO.getBody());
                 AWS4Signer.updateHeaderWithContentHash(httpClientCallDTO.getHeaders(), bodyHash);
@@ -298,9 +309,9 @@ public class MockedRestServerEngineUtils {
             } catch (MalformedURLException urlException) {
                 logger.error("Cannot construct endpoint for " + service, urlException);
             }
-            httpClientCallDTO.getHeaders().remove(HttpHeaders.CONTENT_LENGTH);
+            AWS4Signer.removeHeader(httpClientCallDTO.getHeaders(), HttpHeaders.CONTENT_LENGTH);
         } else if (isAwsCall) {
-            httpClientCallDTO.getHeaders().remove(HttpHeaders.CONTENT_LENGTH);
+            AWS4Signer.removeHeader(httpClientCallDTO.getHeaders(), HttpHeaders.CONTENT_LENGTH);
             httpClientCallDTO.setUrl("https://" + hostForHeader
                     + httpClientCallDTO.getPathInfo() + httpClientCallDTO.getRequestParams()
             );
@@ -320,7 +331,7 @@ public class MockedRestServerEngineUtils {
             }
         }
 
-        if (awsCredentialsProvider.get(accessKey) == null) {
+        if (awsCredentialsProvider.getSecretKey(accessKey) == null) {
             logger.debug("AWSCredentials can't find secret for " + accessKey + " -> using the one from profile");
             accessKey = null;
         }
