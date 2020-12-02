@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class MockedRestServerEngineUtils {
 
-    private static final String AWS_SERVICE_PREFIX = "/aws-service-([a-zA-Z0-9]*).*";
+    private static final String AWS_SERVICE_PREFIX = "/aws-service-([-a-zA-Z0-9]*).*";
     private final Logger logger = LoggerFactory.getLogger(MockedRestServerEngineUtils.class);
 
     private static final String HEADER_X_SMOCKIN_AWS_SERVICE = "x-smockin-aws-service";
