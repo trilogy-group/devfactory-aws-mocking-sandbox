@@ -357,8 +357,7 @@ public class MockedRestServerEngineUtils {
         final Map<String, String> headers = httpClientCallDTO.getHeaders();
         final String xAmzTargetHeader = AWS4Signer.getHeader(headers, AWS4SignerBase.HEADER_X_AMZ_TARGET);
         if (X_AMZ_TARGET_COGNITO_SIGNUP.equals(xAmzTargetHeader)
-            || X_AMZ_TARGET_COGNITO_INITIATE_AUTH.equals(xAmzTargetHeader))
-        {
+            || X_AMZ_TARGET_COGNITO_INITIATE_AUTH.equals(xAmzTargetHeader)) {
             logger.debug("AWS Service call detected: {}", xAmzTargetHeader);
             return true;
         }
