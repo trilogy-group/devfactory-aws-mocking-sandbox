@@ -59,6 +59,7 @@ public class MockedRestServerEngineUtils {
     private static final String ENDPOINT_US_EAST_1_AMAZONAWS_COM = ".us-east-1.amazonaws.com";
 
     private static final String X_AMZ_TARGET_COGNITO_SIGNUP = "AWSCognitoIdentityProviderService.SignUp";
+    private static final String X_AMZ_TARGET_COGNITO_INITIATE_AUTH = "AWSCognitoIdentityProviderService.InitiateAuth";
 
     @Autowired
     private RestfulMockDAO restfulMockDAO;
@@ -355,7 +356,9 @@ public class MockedRestServerEngineUtils {
     private boolean isAwsServiceCall(HttpClientCallDTO httpClientCallDTO) {
         final Map<String, String> headers = httpClientCallDTO.getHeaders();
         final String xAmzTargetHeader = AWS4Signer.getHeader(headers, AWS4SignerBase.HEADER_X_AMZ_TARGET);
-        if (X_AMZ_TARGET_COGNITO_SIGNUP.equals(xAmzTargetHeader)) {
+        if (X_AMZ_TARGET_COGNITO_SIGNUP.equals(xAmzTargetHeader)
+            || X_AMZ_TARGET_COGNITO_INITIATE_AUTH.equals(xAmzTargetHeader))
+        {
             logger.debug("AWS Service call detected: {}", xAmzTargetHeader);
             return true;
         }
