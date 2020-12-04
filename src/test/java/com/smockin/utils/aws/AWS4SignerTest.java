@@ -1,5 +1,6 @@
 package com.smockin.utils.aws;
 
+import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -11,80 +12,105 @@ import com.smockin.admin.service.utils.aws.AWS4Signer;
 
 
 public class AWS4SignerTest {
+  final static String HEADER_1 = "header1";
+  final static String HEADER_2 = "heaDEr2";
+  final static String HEADER_3 = "header3";
+
+  final static String ANY_VALUE = "anyValue";
+
+  private Map<String, String> headers = new HashMap<>();
+
+  @Before
+  public void setUp() throws Exception {
+    headers.clear();
+  }
 
   @Test
-  public void containsHeaderTest() {
-    final Map<String, String> headers = new HashMap<>();
-
-    final String HEADER_1 = "header1";
-    final String HEADER_2 = "heaDEr2";
-    final String HEADER_3 = "header3";
-
-    final String anyValue = "anyValue";
-
+  public void containsHeaderIsEmptTest() {
     assertFalse(AWS4Signer.containsHeader(headers, HEADER_1));
     assertFalse(AWS4Signer.containsHeader(headers, HEADER_2));
+  }
 
-    headers.put(HEADER_1, anyValue);
+  @Test
+  public void containsHeader1OnlyTest() {
+    headers.put(HEADER_1, ANY_VALUE);
     assertTrue(AWS4Signer.containsHeader(headers, HEADER_1));
     assertFalse(AWS4Signer.containsHeader(headers, HEADER_2));
+  }
 
-    headers.put(HEADER_2, anyValue);
-    assertTrue(AWS4Signer.containsHeader(headers, HEADER_1));
-    assertTrue(AWS4Signer.containsHeader(headers, HEADER_2));
-
-    headers.put(HEADER_3, anyValue);
+  @Test
+  public void containsHeaderBothKeysTest() {
+    headers.put(HEADER_1, ANY_VALUE);
+    headers.put(HEADER_2, ANY_VALUE);
     assertTrue(AWS4Signer.containsHeader(headers, HEADER_1));
     assertTrue(AWS4Signer.containsHeader(headers, HEADER_2));
+  }
 
-    headers.clear();
+  @Test
+  public void containsHeaderMoreThanCheckedTest() {
+    headers.put(HEADER_1, ANY_VALUE);
+    headers.put(HEADER_2, ANY_VALUE);
+    headers.put(HEADER_3, ANY_VALUE);
+    assertTrue(AWS4Signer.containsHeader(headers, HEADER_1));
+    assertTrue(AWS4Signer.containsHeader(headers, HEADER_2));
+  }
+
+  @Test
+  public void containsHeaderAnotherKeyTest() {
+    headers.put(HEADER_3, ANY_VALUE);
     assertFalse(AWS4Signer.containsHeader(headers, HEADER_1));
     assertFalse(AWS4Signer.containsHeader(headers, HEADER_2));
+  }
 
-    headers.put(HEADER_3, anyValue);
-    assertFalse(AWS4Signer.containsHeader(headers, HEADER_1));
-    assertFalse(AWS4Signer.containsHeader(headers, HEADER_2));
-
-    headers.put(HEADER_2.toUpperCase(), anyValue);
+  @Test
+  public void containsHeaderCharCaseIsNotImportantTest() {
+    headers.put(HEADER_2.toUpperCase(), ANY_VALUE);
     assertFalse(AWS4Signer.containsHeader(headers, HEADER_1));
     assertTrue(AWS4Signer.containsHeader(headers, HEADER_2.toLowerCase()));
   }
 
   @Test
-  public void getHeaderTest() {
-    final Map<String, String> headers = new HashMap<>();
-
-    final String HEADER_1 = "header1";
-    final String HEADER_2 = "heaDEr2";
-    final String HEADER_3 = "header3";
-
-    final String anyValue = "anyValue";
-
+  public void getHeaderEmptyTest() {
     assertEquals(AWS4Signer.getHeader(headers, HEADER_1), "");
     assertEquals(AWS4Signer.getHeader(headers, HEADER_2), "");
+  }
 
-    headers.put(HEADER_1, anyValue);
-    assertEquals(AWS4Signer.getHeader(headers, HEADER_1), anyValue);
+  @Test
+  public void getHeaderHeader1OnlyTest() {
+    headers.put(HEADER_1, ANY_VALUE);
+    assertEquals(AWS4Signer.getHeader(headers, HEADER_1), ANY_VALUE);
     assertEquals(AWS4Signer.getHeader(headers, HEADER_2), "");
+  }
 
-    headers.put(HEADER_2, anyValue);
-    assertEquals(AWS4Signer.getHeader(headers, HEADER_1), anyValue);
-    assertEquals(AWS4Signer.getHeader(headers, HEADER_2), anyValue);
+  @Test
+  public void getHeaderBothHeadersTest() {
+    headers.put(HEADER_1, ANY_VALUE);
+    headers.put(HEADER_2, ANY_VALUE);
+    assertEquals(AWS4Signer.getHeader(headers, HEADER_1), ANY_VALUE);
+    assertEquals(AWS4Signer.getHeader(headers, HEADER_2), ANY_VALUE);
+  }
 
-    headers.put(HEADER_3, anyValue);
-    assertEquals(AWS4Signer.getHeader(headers, HEADER_1), anyValue);
-    assertEquals(AWS4Signer.getHeader(headers, HEADER_2), anyValue);
+  @Test
+  public void getHeaderMoreKeysThanNeededTest() {
+    headers.put(HEADER_1, ANY_VALUE);
+    headers.put(HEADER_2, ANY_VALUE);
+    headers.put(HEADER_3, ANY_VALUE);
+    assertEquals(AWS4Signer.getHeader(headers, HEADER_1), ANY_VALUE);
+    assertEquals(AWS4Signer.getHeader(headers, HEADER_2), ANY_VALUE);
+  }
 
-    headers.clear();
+  @Test
+  public void getHeaderOtherKeyOnlyTest() {
+    headers.put(HEADER_3, ANY_VALUE);
     assertEquals(AWS4Signer.getHeader(headers, HEADER_1), "");
     assertEquals(AWS4Signer.getHeader(headers, HEADER_2), "");
+  }
 
-    headers.put(HEADER_3, anyValue);
+  @Test
+  public void getHeaderCaseSensitivityTest() {
+    headers.put(HEADER_3, ANY_VALUE);
+    headers.put(HEADER_2.toUpperCase(), ANY_VALUE);
     assertEquals(AWS4Signer.getHeader(headers, HEADER_1), "");
-    assertEquals(AWS4Signer.getHeader(headers, HEADER_2), "");
-
-    headers.put(HEADER_2.toUpperCase(), anyValue);
-    assertEquals(AWS4Signer.getHeader(headers, HEADER_1), "");
-    assertEquals(AWS4Signer.getHeader(headers, HEADER_2), anyValue);
+    assertEquals(AWS4Signer.getHeader(headers, HEADER_2), ANY_VALUE);
   }
 }
