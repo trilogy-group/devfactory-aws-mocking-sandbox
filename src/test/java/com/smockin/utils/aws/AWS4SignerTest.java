@@ -11,11 +11,11 @@ import java.util.Map;
 import com.smockin.admin.service.utils.aws.AWS4Signer;
 
 public class AWS4SignerTest {
-  final static String HEADER_1 = "header1";
-  final static String HEADER_2 = "heaDEr2";
-  final static String HEADER_3 = "header3";
+  public static final String HEADER_1 = "header1";
+  public static final String HEADER_2 = "heaDEr2";
+  public static final String HEADER_3 = "header3";
 
-  final static String ANY_VALUE = "anyValue";
+  public static final String ANY_VALUE = "anyValue";
 
   private Map<String, String> headers;
 
