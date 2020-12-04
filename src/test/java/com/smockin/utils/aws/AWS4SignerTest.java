@@ -7,9 +7,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import java.util.HashMap;
 import java.util.Map;
-
 import com.smockin.admin.service.utils.aws.AWS4Signer;
-
 
 public class AWS4SignerTest {
   final static String HEADER_1 = "header1";
@@ -18,11 +16,11 @@ public class AWS4SignerTest {
 
   final static String ANY_VALUE = "anyValue";
 
-  private Map<String, String> headers = new HashMap<>();
+  private Map<String, String> headers;
 
   @Before
   public void setUp() throws Exception {
-    headers.clear();
+    headers = new HashMap<>();
   }
 
   @Test
