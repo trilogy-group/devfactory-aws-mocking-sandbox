@@ -72,6 +72,10 @@ public class AWS4Signer extends AWS4SignerBase {
         headers.keySet().removeIf(key -> key.equalsIgnoreCase(header));
     }
 
+    public static boolean containsHeader(final Map<String, String> headers, final String header) {
+        return headers.keySet().stream().filter(key -> key.equalsIgnoreCase(header)).count() > 0;
+    }
+
     public static void updateHeaderWithAuthorization(Map<String, String> headers, String awsAuthorizationHeaderValue) {
         removeHeader(headers, HttpHeaders.AUTHORIZATION);
         headers.put(HttpHeaders.AUTHORIZATION, awsAuthorizationHeaderValue);

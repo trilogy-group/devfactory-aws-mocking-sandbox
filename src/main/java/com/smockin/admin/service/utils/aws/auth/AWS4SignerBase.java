@@ -44,6 +44,7 @@ public abstract class AWS4SignerBase {
     public static final String HEADER_X_AMZ_SECURITY_TOKEN = "x-amz-security-token";
     public static final String HEADER_X_AMZ_CONTENT_SHA_256 = "x-amz-content-sha256";
     public static final String HEADER_X_AMZ_DATE = "x-amz-date";
+    public static final String HEADER_X_AMZ_TARGET = "x-amz-target";
 
     /**
      * @see https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html
