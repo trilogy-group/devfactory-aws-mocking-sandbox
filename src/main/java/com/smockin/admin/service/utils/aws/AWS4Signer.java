@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URL;
 import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Based and inspired by:
@@ -70,6 +71,30 @@ public class AWS4Signer extends AWS4SignerBase {
      */
     public static void removeHeader(final Map<String, String> headers, final String header) {
         headers.keySet().removeIf(key -> key.equalsIgnoreCase(header));
+    }
+
+    /**
+     * Returns true only when given header contains given key (header) (case insensitive) exists in specified headers.
+     * @param headers set to check
+     * @param header a header key to find in source*
+     * @return <tt>true</tt> when headers contains key.
+     */
+    public static boolean containsHeader(final Map<String, String> headers, final String header) {
+        return headers.keySet().stream().filter(key -> key.equalsIgnoreCase(header)).count() > 0;
+    }
+
+    /**
+     * Returns header value if contains given key (header) (case insensitive) exists in specified headers.
+     * @param headers set to check
+     * @param header a header key to find in source*
+     * @return <tt>true</tt> when headers contains key.
+     */
+    public static String getHeader(final Map<String, String> headers, final String header) {
+        Optional<String> keyValue = headers.keySet().stream().filter(key -> key.equalsIgnoreCase(header)).findFirst();
+        if (keyValue.isPresent()) {
+            return headers.get(keyValue.get());
+        }
+        return "";
     }
 
     public static void updateHeaderWithAuthorization(Map<String, String> headers, String awsAuthorizationHeaderValue) {

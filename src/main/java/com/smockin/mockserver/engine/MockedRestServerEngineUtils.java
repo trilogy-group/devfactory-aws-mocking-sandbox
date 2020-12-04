@@ -58,6 +58,9 @@ public class MockedRestServerEngineUtils {
     private static final String ENDPOINT_AMAZONAWS_COM = ".amazonaws.com";
     private static final String ENDPOINT_US_EAST_1_AMAZONAWS_COM = ".us-east-1.amazonaws.com";
 
+    private static final String X_AMZ_TARGET_COGNITO_SIGNUP = "AWSCognitoIdentityProviderService.SignUp";
+    private static final String X_AMZ_TARGET_COGNITO_INITIATE_AUTH = "AWSCognitoIdentityProviderService.InitiateAuth";
+
     @Autowired
     private RestfulMockDAO restfulMockDAO;
 
@@ -284,30 +287,37 @@ public class MockedRestServerEngineUtils {
         if (isAwsServiceCall) {
             final String service = httpClientCallDTO.getHeaders().get(HttpHeaders.HOST);
             httpClientCallDTO.setUrl("https://" + hostForHeader + httpClientCallDTO.getPathInfo() + httpClientCallDTO.getRequestParams());
-            try {
-                AwsProfile awsProfile = awsCredentialsProvider.getDefaultProfile();
-                final String awsAccessKey = determineAwsAccessKeyBasedOnRequest(httpClientCallDTO.getHeaders());
-                final String awsService = httpClientCallDTO.getHeaders().get(HEADER_X_SMOCKIN_AWS_SERVICE);
-                AWS4Signer aws4Signer = new AWS4Signer(awsAccessKey, awsCredentialsProvider.getSecretKey(awsAccessKey),
-                        new URL(httpClientCallDTO.getUrl()), httpClientCallDTO.getMethod().toString(),
+            final boolean securityTokenExists
+                = AWS4Signer.containsHeader(httpClientCallDTO.getHeaders(), AWS4SignerBase.HEADER_X_AMZ_SECURITY_TOKEN);
+            if (securityTokenExists) {
+                try {
+                    AwsProfile awsProfile = awsCredentialsProvider.getDefaultProfile();
+                    final String awsAccessKey = determineAwsAccessKeyBasedOnRequest(httpClientCallDTO.getHeaders());
+                    final String awsService = httpClientCallDTO.getHeaders().get(HEADER_X_SMOCKIN_AWS_SERVICE);
+                    AWS4Signer aws4Signer = new AWS4Signer(
+                        awsAccessKey,
+                        awsCredentialsProvider.getSecretKey(awsAccessKey),
+                        new URL(httpClientCallDTO.getUrl()),
+                        httpClientCallDTO.getMethod().toString(),
                         (awsService != null ? awsService.toLowerCase() : ""),
                         awsProfile.getRegion()
-                );
+                    );
 
-                AWS4Signer.removeHeader(httpClientCallDTO.getHeaders(), AWS4SignerBase.HEADER_X_AMZ_SECURITY_TOKEN);
-                final String securityTokenForAccessKey = awsCredentialsProvider.getSecurityToken(awsAccessKey);
-                if (securityTokenForAccessKey != null) {
-                    httpClientCallDTO.getHeaders()
+                    AWS4Signer.removeHeader(httpClientCallDTO.getHeaders(), AWS4SignerBase.HEADER_X_AMZ_SECURITY_TOKEN);
+                    final String securityTokenForAccessKey = awsCredentialsProvider.getSecurityToken(awsAccessKey);
+                    if (securityTokenForAccessKey != null) {
+                        httpClientCallDTO.getHeaders()
                             .put(AWS4SignerBase.HEADER_X_AMZ_SECURITY_TOKEN, securityTokenForAccessKey);
-                }
+                    }
 
-                AWS4Signer.removeHeader(httpClientCallDTO.getHeaders(), HEADER_X_SMOCKIN_AWS_SERVICE);
-                final String bodyHash = AWS4Signer.computeContentHash(httpClientCallDTO.getBody());
-                AWS4Signer.updateHeaderWithContentHash(httpClientCallDTO.getHeaders(), bodyHash);
-                String signature = aws4Signer.computeSignature(httpClientCallDTO.getHeaders(), null);
-                AWS4Signer.updateHeaderWithAuthorization(httpClientCallDTO.getHeaders(), signature);
-            } catch (MalformedURLException urlException) {
-                logger.error("Cannot construct endpoint for " + service, urlException);
+                    AWS4Signer.removeHeader(httpClientCallDTO.getHeaders(), HEADER_X_SMOCKIN_AWS_SERVICE);
+                    final String bodyHash = AWS4Signer.computeContentHash(httpClientCallDTO.getBody());
+                    AWS4Signer.updateHeaderWithContentHash(httpClientCallDTO.getHeaders(), bodyHash);
+                    String signature = aws4Signer.computeSignature(httpClientCallDTO.getHeaders(), null);
+                    AWS4Signer.updateHeaderWithAuthorization(httpClientCallDTO.getHeaders(), signature);
+                } catch (MalformedURLException urlException) {
+                    logger.error("Cannot construct endpoint for " + service, urlException);
+                }
             }
             AWS4Signer.removeHeader(httpClientCallDTO.getHeaders(), HttpHeaders.CONTENT_LENGTH);
         } else if (isAwsCall) {
@@ -344,7 +354,15 @@ public class MockedRestServerEngineUtils {
     }
 
     private boolean isAwsServiceCall(HttpClientCallDTO httpClientCallDTO) {
-        final String authHeader = httpClientCallDTO.getHeaders().get(HttpHeaders.AUTHORIZATION);
+        final Map<String, String> headers = httpClientCallDTO.getHeaders();
+        final String xAmzTargetHeader = AWS4Signer.getHeader(headers, AWS4SignerBase.HEADER_X_AMZ_TARGET);
+        if (X_AMZ_TARGET_COGNITO_SIGNUP.equals(xAmzTargetHeader)
+            || X_AMZ_TARGET_COGNITO_INITIATE_AUTH.equals(xAmzTargetHeader)) {
+            logger.debug("AWS Service call detected: {}", xAmzTargetHeader);
+            return true;
+        }
+
+        final String authHeader = headers.get(HttpHeaders.AUTHORIZATION);
         if (authHeader == null) {
             return false;
         }
