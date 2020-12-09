@@ -49,8 +49,10 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class MockedRestServerEngineUtils {
 
-    private static final String AWS_SERVICE_PREFIX = "/aws-service-([-a-zA-Z0-9]*).*";
     private final Logger logger = LoggerFactory.getLogger(MockedRestServerEngineUtils.class);
+
+    private static final String AWS_SERVICE_PREFIX = "/aws-service-([-a-zA-Z0-9]*).*";
+    private static final String AWS_SERVICE_PATH_INFO = "/aws-service-[^/]*(/.*)$";
 
     private static final String HEADER_X_SMOCKIN_AWS_SERVICE = "x-smockin-aws-service";
     private static final String AWS_S3_SERVICE = "s3";
@@ -110,7 +112,7 @@ public class MockedRestServerEngineUtils {
                 response)
                 : handleMockLookup(request, response, isMultiUserMode, false);
         opMockedResponse.ifPresent(mockedResponse -> {
-            logger.debug("===========================================================================\n" +
+            logger.debug("\n===========================================================================\n" +
                     "Got response from mocked/proxy:\n"+
                     mockedResponse + "\n" +
                     "===========================================================================");
@@ -392,7 +394,14 @@ public class MockedRestServerEngineUtils {
                         awsService = serviceMatcher.group(1).toLowerCase();
                         AWS4Signer.removeHeader(httpClientCallDTO.getHeaders(), HEADER_X_SMOCKIN_AWS_SERVICE);
                         httpClientCallDTO.getHeaders().put(HEADER_X_SMOCKIN_AWS_SERVICE, awsService);
-                        httpClientCallDTO.setPathInfo("/");
+                        Matcher matcher = Pattern.compile(AWS_SERVICE_PATH_INFO).matcher(pathInfo);
+                        if (matcher.matches() && matcher.groupCount() > 0) {
+                            final String destination = matcher.group(1);
+                            httpClientCallDTO.setPathInfo(destination);
+                            logger.info("Found pathInfo: " + destination);
+                        } else {
+                            httpClientCallDTO.setPathInfo("/");
+                        }
                         return determineEndpointForService(awsService);
                     }
                     logger.error("Can't map AWS service for path: " + pathInfo);
